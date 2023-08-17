@@ -210,7 +210,7 @@ def train_input():
     trainer = Trainer()
 
     with gr.Blocks() as demo:
-        uuid = gr.Text(label="modelscope_uuid", visible=False)
+        uuid = gr.Text(label="modelscope_uuid", visible=True)
         with gr.Row():
             with gr.Column():
                 with gr.Box():
@@ -255,7 +255,7 @@ def train_input():
 
 def inference_input():
     with gr.Blocks() as demo:
-        uuid = gr.Text(label="modelscope_uuid", visible=False)
+        uuid = gr.Text(label="modelscope_uuid", visible=True)
         with gr.Row():
             with gr.Column():
                 # user_models = gr.Radio(label="风格选择", choices=['\N{fire}商务证件'], type="value", value='\N{fire}商务证件')
@@ -296,4 +296,5 @@ with gr.Blocks(css='style.css') as demo:
 
 # demo.queue(max_size=100).launch(share=False)
 # demo.queue(concurrency_count=20).launch(share=False)
-demo.queue(status_update_rate=1).launch(share=True)
+demo.queue(status_update_rate=1).launch(share=True, server_name="0.0.0.0", show_error=True, debug=True,
+                                        enable_queue=True)
