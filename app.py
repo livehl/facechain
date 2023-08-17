@@ -16,7 +16,6 @@ from facechain.train_text_to_image_lora import prepare_dataset, data_process_fn
 
 sys.path.append('facechain')
 
-
 training_threadpool = ThreadPoolExecutor(max_workers=1)
 inference_threadpool = ThreadPoolExecutor(max_workers=5)
 
@@ -24,7 +23,7 @@ training_done_count = 0
 inference_done_count = 0
 
 HOT_MODELS = [
-    "\N{fire}数字身份",
+    "数字身份",
 ]
 
 
@@ -46,12 +45,13 @@ def concatenate_images(images):
 
 
 def train_lora_fn(foundation_model_path=None, revision=None, output_img_dir=None, work_dir=None):
-    os.system(f'PYTHONPATH=. accelerate launch facechain/train_text_to_image_lora.py --pretrained_model_name_or_path={foundation_model_path} '
-              f'--revision={revision} --sub_path="film/film" '
-              f'--output_dataset_name={output_img_dir} --caption_column="text" --resolution=512 '
-              f'--random_flip --train_batch_size=1 --num_train_epochs=200 --checkpointing_steps=5000 '
-              f'--learning_rate=1e-04 --lr_scheduler="cosine" --lr_warmup_steps=0 --seed=42 --output_dir={work_dir} '
-              f'--lora_r=32 --lora_alpha=32 --lora_text_encoder_r=32 --lora_text_encoder_alpha=32')
+    os.system(
+        f'PYTHONPATH=. accelerate launch facechain/train_text_to_image_lora.py --pretrained_model_name_or_path={foundation_model_path} '
+        f'--revision={revision} --sub_path="film/film" '
+        f'--output_dataset_name={output_img_dir} --caption_column="text" --resolution=512 '
+        f'--random_flip --train_batch_size=1 --num_train_epochs=200 --checkpointing_steps=5000 '
+        f'--learning_rate=1e-04 --lr_scheduler="cosine" --lr_warmup_steps=0 --seed=42 --output_dir={work_dir} '
+        f'--lora_r=32 --lora_alpha=32 --lora_text_encoder_r=32 --lora_text_encoder_alpha=32 --mixed_precision=bf16')
 
 
 def launch_pipeline(uuid,
@@ -127,10 +127,7 @@ class Trainer:
         if len(instance_images) > 10:
             raise gr.Error('您需要上传小于10张训练图片！')
         if not uuid:
-            if os.getenv("MODELSCOPE_ENVIRONMENT") == 'studio':
-                return "请登陆后使用! "
-            else:
-                uuid = 'qw'
+            uuid = 'qw'
 
         output_model_name = 'personalizaition_lora'
 
@@ -187,7 +184,7 @@ def train_input():
     trainer = Trainer()
 
     with gr.Blocks() as demo:
-        uuid = gr.Text(label="modelscope_uuid", visible=False)
+        uuid = gr.Text(label="modelscope_uuid", visible=True)
         with gr.Row():
             with gr.Column():
                 with gr.Box():
@@ -197,11 +194,9 @@ def train_input():
                     upload_button = gr.UploadButton("选择图片上传", file_types=["image"], file_count="multiple")
                     upload_button.upload(upload_file, upload_button, instance_images)
                     gr.Markdown('''
-                        - Step 0. 登陆ModelScope账号，未登录无法使用定制功能
                         - Step 1. 上传你计划训练的图片，3~10张头肩照（注意：图片中多人脸、脸部遮挡等情况会导致效果异常，需要重新上传符合规范图片训练）
                         - Step 2. 点击 [形象定制] ，启动模型训练，等待约15分钟，请您耐心等待
                         - Step 3. 切换至 [形象体验] ，生成你的风格照片
-                        - 注意：生成结果严禁用于非法用途！
                         ''')
 
         run_button = gr.Button('开始训练（等待上传图片加载显示出来再点，否则会报错）')
@@ -210,15 +205,14 @@ def train_input():
             gr.Markdown(
                 '输出信号（出现error时训练可能已完成或还在进行。可直接切到形象体验tab页面，如果体验时报错则训练还没好，再等待一般10来分钟。）')
             output_message = gr.Markdown()
-        with gr.Box():
-            gr.Markdown('''
-            碰到抓狂的错误或者计算资源紧张的情况下，推荐直接在[NoteBook](https://modelscope.cn/my/mynotebook/preset)上按照如下命令自行体验
-            1. git clone https://www.modelscope.cn/studios/CVstudio/cv_human_portrait.git
-            2. cd cv_human_portrait
-            3. pip install -r requirements.txt 
-            4. pip install gradio==3.35.2
-            5. python app.py
-            ''')
+        # with gr.Box():
+        #     gr.Markdown('''
+        #     1. git clone https://www.modelscope.cn/studios/CVstudio/cv_human_portrait.git
+        #     2. cd cv_human_portrait
+        #     3. pip install -r requirements.txt
+        #     4. pip install gradio==3.35.2
+        #     5. python app.py
+        #     ''')
 
         run_button.click(fn=trainer.run,
                          inputs=[
@@ -232,7 +226,7 @@ def train_input():
 
 def inference_input():
     with gr.Blocks() as demo:
-        uuid = gr.Text(label="modelscope_uuid", visible=False)
+        uuid = gr.Text(label="modelscope_uuid", visible=True)
         with gr.Row():
             with gr.Column():
                 # user_models = gr.Radio(label="风格选择", choices=['\N{fire}商务证件'], type="value", value='\N{fire}商务证件')
@@ -265,11 +259,12 @@ def inference_input():
 
 with gr.Blocks(css='style.css') as demo:
     with gr.Tabs():
-        with gr.TabItem('\N{rocket}形象定制'):
+        with gr.TabItem('形象定制'):
             train_input()
-        with gr.TabItem('\N{party popper}形象体验'):
+        with gr.TabItem('形象体验'):
             inference_input()
 
 # demo.queue(max_size=100).launch(share=False)
 # demo.queue(concurrency_count=20).launch(share=False)
-demo.queue(status_update_rate=1).launch(share=True)
+demo.queue(status_update_rate=1).launch(share=True, server_name="0.0.0.0", show_error=True, debug=True,
+                                        enable_queue=True)

@@ -198,6 +198,7 @@ def get_mask_head(result):
 
 
 class Blipv2():
+    """将图片处理成标准大小，并根据模型生成图片的文字tag，保存为训练数据格式"""
     def __init__(self):
         self.model = DeepDanbooru()
         self.skin_retouching = pipeline(Tasks.skin_retouching, model='damo/cv_unet_skin-retouching')

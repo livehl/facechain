@@ -96,6 +96,7 @@ def softmax(x):
 
 
 def get_rot(image):
+    """旋转图片"""
     model_dir = snapshot_download('Cherrytest/rot_bgr', revision='v1.0.0')
     model_path = os.path.join(model_dir, 'rot_bgr.onnx')
     ort_session = onnxruntime.InferenceSession(model_path)
@@ -138,7 +139,6 @@ def prepare_dataset(instance_images: list, output_dataset_dir):
         os.makedirs(output_dataset_dir)
     for i, temp_path in enumerate(instance_images):
         image = PIL.Image.open(temp_path)
-        # image = PIL.Image.open(temp_path.name)
         '''
         w, h = image.size
         max_size = max(w, h)
