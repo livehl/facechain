@@ -27,7 +27,7 @@ training_done_count = 0
 inference_done_count = 0
 
 HOT_MODELS = [
-    "\N{fire}数字身份",
+    "数字身份",
 ]
 
 examples = {
@@ -78,12 +78,15 @@ def launch_pipeline(uuid,
     if style_model == 'default_style_model_path':
         style_model_path = None
     else:
-        style_model_path = style_model
-        if style_model == 'xiapei.safetensors':
-            model_dir = snapshot_download('ly261666/civitai_xiapei_lora', revision='v1.0.0')
-            style_model_path = os.path.join(model_dir, 'xiapei.safetensors')
-            multiplier_style = 0.35
-            add_prompt = 'red, hanfu, tiara, crown, '
+        # style_model_path = style_model
+        # if style_model == 'xiapei.safetensors':
+        #     model_dir = snapshot_download('ly261666/civitai_xiapei_lora', revision='v1.0.0')
+        #     style_model_path = os.path.join(model_dir, 'xiapei.safetensors')
+        #     multiplier_style = 0.35
+        #     add_prompt = 'red, hanfu, tiara, crown, '
+        style_model_path = "/root/.cache/modelscope/113488/library-bookshelf/bookshelf.safetensors"
+        multiplier_style = 1
+        add_prompt = 'lib_bg, '
 
     print("-------user_models: ", user_models)
     if not uuid:
@@ -150,10 +153,7 @@ class Trainer:
         if len(instance_images) > 10:
             raise gr.Error('您需要上传小于10张训练图片！')
         if not uuid:
-            if os.getenv("MODELSCOPE_ENVIRONMENT") == 'studio':
-                return "请登陆后使用! "
-            else:
-                uuid = 'qw'
+            uuid = 'qw'
 
         output_model_name = 'personalizaition_lora'
 
@@ -220,11 +220,9 @@ def train_input():
                     upload_button = gr.UploadButton("选择图片上传", file_types=["image"], file_count="multiple")
                     upload_button.upload(upload_file, upload_button, instance_images)
                     gr.Markdown('''
-                        - Step 0. 登陆ModelScope账号，未登录无法使用定制功能
                         - Step 1. 上传你计划训练的图片，3~10张头肩照（注意：图片中多人脸、脸部遮挡等情况会导致效果异常，需要重新上传符合规范图片训练）
                         - Step 2. 点击 [形象定制] ，启动模型训练，等待约15分钟，请您耐心等待
                         - Step 3. 切换至 [形象体验] ，生成你的风格照片
-                        - 注意：生成结果严禁用于非法用途！
                         ''')
 
         run_button = gr.Button('开始训练（等待上传图片加载显示出来再点，否则会报错）')
@@ -233,15 +231,14 @@ def train_input():
             gr.Markdown(
                 '输出信号（出现error时训练可能已完成或还在进行。可直接切到形象体验tab页面，如果体验时报错则训练还没好，再等待一般10来分钟。）')
             output_message = gr.Markdown()
-        with gr.Box():
-            gr.Markdown('''
-            碰到抓狂的错误或者计算资源紧张的情况下，推荐直接在[NoteBook](https://modelscope.cn/my/mynotebook/preset)上按照如下命令自行体验
-            1. git clone https://www.modelscope.cn/studios/CVstudio/cv_human_portrait.git
-            2. cd cv_human_portrait
-            3. pip install -r requirements.txt 
-            4. pip install gradio==3.35.2
-            5. python app.py
-            ''')
+        # with gr.Box():
+        #     gr.Markdown('''
+        #     1. git clone https://www.modelscope.cn/studios/CVstudio/cv_human_portrait.git
+        #     2. cd cv_human_portrait
+        #     3. pip install -r requirements.txt
+        #     4. pip install gradio==3.35.2
+        #     5. python app.py
+        #     ''')
 
         run_button.click(fn=trainer.run,
                          inputs=[
@@ -280,6 +277,7 @@ def inference_input():
             # output_image = gr.Image()
             output_images = gr.Gallery(label='Output', show_label=False).style(columns=3, rows=2, height=600,
                                                                                object_fit="contain")
+
         display_button.click(fn=launch_pipeline,
                             inputs=[uuid, user_models, num_images, style_model],
                             outputs=[infer_progress, output_images])
@@ -289,9 +287,9 @@ def inference_input():
 
 with gr.Blocks(css='style.css') as demo:
     with gr.Tabs():
-        with gr.TabItem('\N{rocket}形象定制'):
+        with gr.TabItem('形象定制'):
             train_input()
-        with gr.TabItem('\N{party popper}形象体验'):
+        with gr.TabItem('形象体验'):
             inference_input()
 
 # demo.queue(max_size=100).launch(share=False)
