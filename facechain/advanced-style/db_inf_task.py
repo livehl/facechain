@@ -85,8 +85,8 @@ def main():
                 inserts(paint_imgs, "facechain_paint_files")
             time.sleep(0.5)
 
-
-
+        except KeyboardInterrupt:
+            exit(0)
         except BaseException:
             traceback.print_exc()
 
