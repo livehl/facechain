@@ -1,24 +1,15 @@
-import enum
 import os
 import shutil
 import sys
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor
-
-import cv2
-import gradio as gr
-import numpy as np
-import torch
 import oss2
 
 sys.path.append('../..')
 from dbtool import sql_to_dict, update
 from dbtool import setting as st
 from setting import time_cache, uuid_str
-from inference import GenPortrait
 from facechain.train_text_to_image_lora import prepare_dataset, data_process_fn
-from modelscope import snapshot_download
 
 sys.path.append('../../facechain')
 

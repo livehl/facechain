@@ -1,15 +1,9 @@
-import enum
-import os
 import shutil
 import sys
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor
 
 import cv2
-import gradio as gr
-import numpy as np
-import torch
 import oss2
 
 sys.path.append('../..')
@@ -63,7 +57,7 @@ def tranin(work_path: str, instance_images: list):
     prepare_dataset(instance_images, output_dataset_dir=instance_data_dir)
     data_process_fn(instance_data_dir, True)
     # train lora
-    train_lora_fn(foundation_model_path='ly261666/cv_portrait_model',
+    inference_lora_fn(foundation_model_path='ly261666/cv_portrait_model',
                   revision='v2.0',
                   output_img_dir=instance_data_dir,
                   work_dir=work_dir)
