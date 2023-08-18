@@ -78,15 +78,15 @@ def launch_pipeline(uuid,
     if style_model == 'default_style_model_path':
         style_model_path = None
     else:
-        # style_model_path = style_model
-        # if style_model == 'xiapei.safetensors':
-        #     model_dir = snapshot_download('ly261666/civitai_xiapei_lora', revision='v1.0.0')
-        #     style_model_path = os.path.join(model_dir, 'xiapei.safetensors')
-        #     multiplier_style = 0.35
-        #     add_prompt = 'red, hanfu, tiara, crown, '
-        style_model_path = "/root/.cache/modelscope/113488/library-bookshelf/bookshelf.safetensors"
-        multiplier_style = 1
-        add_prompt = 'lib_bg, '
+        style_model_path = style_model
+        if style_model == 'xiapei.safetensors':
+            model_dir = snapshot_download('ly261666/civitai_xiapei_lora', revision='v1.0.0')
+            style_model_path = os.path.join(model_dir, 'xiapei.safetensors')
+            multiplier_style = 0.35
+            add_prompt = 'red, hanfu, tiara, crown, '
+        # style_model_path = "/root/.cache/modelscope/113488/library-bookshelf/bookshelf.safetensors"
+        # multiplier_style = 0.35
+        # add_prompt = 'lib_bg, '
 
     print("-------user_models: ", user_models)
     if not uuid:
