@@ -8,7 +8,7 @@ import oss2
 sys.path.append('../..')
 from dbtool import sql_to_dict, update
 from dbtool import setting as st
-from setting import time_cache, uuid_str
+from setting import time_cache, uuid_str,loads
 from facechain.train_text_to_image_lora import prepare_dataset, data_process_fn
 
 sys.path.append('../../facechain')
@@ -62,7 +62,7 @@ def main():
                 update({"id": task.id, "status": 1}, "facechain_lora")
                 work_path = f"lora_train/{task.uid}"
                 images = []
-                for img in task.images:
+                for img in loads(task.images):
                     file_name = img.split("/")[-1]
                     local_img = work_path + "/raw_images/" + file_name
                     images.append(local_img)
