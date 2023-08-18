@@ -70,9 +70,9 @@ def main():
                     images.append(local_img)
                     oss.get_object_to_file(img, local_img)
                 lora_path = tranin(work_path, images)
-                file_name = st.face_lora_path + uuid_str() + "_weights.bin"
-                oss.put_object_from_file(file_name, lora_path)
-                update({"id": task.id, "lora": file_name, "status": 2}, "facechain_lora")
+                update_file_name = st.face_lora_path + uuid_str() + "_weights.bin"
+                oss.put_object_from_file(update_file_name, lora_path)
+                update({"id": task.id, "lora": update_file_name, "status": 2}, "facechain_lora")
 
             time.sleep(0.5)
 
