@@ -43,6 +43,7 @@ class UploadTarget(enum.Enum):
 
 
 def concatenate_images(images):
+    "多张照片拼在一起"
     heights = [img.shape[0] for img in images]
     max_width = sum([img.shape[1] for img in images])
 

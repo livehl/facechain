@@ -96,7 +96,8 @@ def main_diffusion_inference(input_img_dir, base_model_path, style_model_path, l
     # trigger_style = trigger_style + 'with <input_id> face, ' 
     # pos_prompt = 'Generate a standard ID photo of a chinese {}, solo, wearing high-class business/working suit, beautiful smooth face, with high-class/simple pure color background, looking straight into the camera with shoulders parallel to the frame, smile, high detail face, best quality, photorealistic'.format(gender)
     pipe = pipe.to("cuda")
-    # print(trigger_style + add_prompt_style + pos_prompt)
+    print(trigger_style + add_prompt_style + pos_prompt)
+    print(neg_prompt)
     images_style = txt2img(pipe, trigger_style + add_prompt_style + pos_prompt, neg_prompt, num_images=10)
     return images_style
 
