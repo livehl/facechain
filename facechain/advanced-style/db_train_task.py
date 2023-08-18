@@ -62,6 +62,8 @@ def main():
                 update({"id": task.id, "status": 1}, "facechain_lora")
                 work_path = f"lora_train/{task.uid}"
                 images = []
+                if task.images:
+                    os.makedirs(work_path + "/raw_images/")
                 for img in loads(task.images):
                     file_name = img.split("/")[-1]
                     local_img = work_path + "/raw_images/" + file_name
