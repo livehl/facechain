@@ -10,7 +10,7 @@ import oss2
 sys.path.append('../..')
 from dbtool import sql_to_dict, update, inserts, get
 from dbtool import setting as st
-from setting import time_cache, uuid_str
+from setting import time_cache, uuid_str, dumps
 from inference import GenPortrait
 from facechain.train_text_to_image_lora import prepare_dataset, data_process_fn
 
@@ -66,14 +66,16 @@ def main():
                 if not os.path.exists("system_lora/" + task.style_lora):
                     if not os.path.exists("system_lora"): os.makedirs("system_lora")
                     oss.get_object_to_file(st.face_style_lora + task.style_lora, "system_lora/" + task.style_lora)
-                result_data = inference_lora_fn(user_lora.metadata.split("\r\n"), lora_name, face_name, "system_lora/" +task.style_lora,
+                result_data = inference_lora_fn(user_lora.metadata.split("\r\n"), lora_name, face_name,
+                                                "system_lora/" + task.style_lora,
                                                 task.add_prompt,
                                                 task.multiplier_style, task.count)
                 images = result_data["final_rgb"]
                 paint_imgs = []
                 for img in images:
-                    file_name = st.face_img_path + "/" + uuid_str() + ".png"
-                    paint_imgs.append({"uid": task.uid, "pid": task.pid, "path": file_name})
+                    file_name = st.face_img_path + uuid_str() + ".png"
+                    info = {"prompt": result_data["prompt"], "neg_prompt": result_data["neg_prompt"]}
+                    paint_imgs.append({"uid": task.uid, "pid": task.pid, "path": file_name, "infos": dumps(info)})
                     oss.put_object(file_name, img)
                 update({"id": task.id, "status": 2}, "facechain_paint")
                 inserts(paint_imgs, "facechain_paint_files")

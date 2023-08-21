@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image
-from diffusers import StableDiffusionPipeline, StableDiffusionLatentUpscalePipeline,StableDiffusionUpscalePipeline
+from diffusers import StableDiffusionPipeline
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
@@ -97,18 +97,8 @@ def main_diffusion_inference(metadata, base_model_path, style_model_path, lora_m
     print(all_prompt)
     print(neg_prompt)
     images_style = txt2img(pipe, all_prompt, neg_prompt, num_images=10)
-    # 高清放大
-    upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
-        "system_lora/sd-x2-latent-upscaler", torch_dtype=torch.float16)
-    upscaler.to("cuda")
-    images_out = []
-    for img in images_style:
-        print(img.size)
-        upscaled_image = \
-            upscaler(prompt=all_prompt, image=img).images[0]
-        images_out.append(upscaled_image)
 
-    return {"images": images_style, "upscaled_images": images_out, "prompt": all_prompt, "neg_prompt": neg_prompt}
+    return {"images": images_style, "prompt": all_prompt, "neg_prompt": neg_prompt}
 
 
 def stylization_fn(use_stylization, rank_results):
@@ -204,11 +194,11 @@ class GenPortrait:
                                            self.add_prompt_style, self.use_main_model, metadata,
                                            lora_model_path=lora_model_path,
                                            base_model_path=base_model_path)
-        upscaled_images = result_data["upscaled_images"]
+        images = result_data["images"]
         # select_high_quality_face PIL
         selected_face = Image.open(face)
         # face_swap cv2
-        swap_results = face_swap_fn(self.use_face_swap, upscaled_images, selected_face)
+        swap_results = face_swap_fn(self.use_face_swap, images, selected_face)
         # pose_process
         rank_results = post_process_fn(self.use_post_process, swap_results, selected_face,
                                        num_gen_images=num_gen_images)
