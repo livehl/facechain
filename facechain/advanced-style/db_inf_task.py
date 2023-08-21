@@ -57,6 +57,7 @@ def main():
                 update({"id": task.id, "status": 1}, "facechain_paint")
                 work_path = f"lora_inference/{user_lora.uid}"
                 # 下载文件
+                shutil.rmtree(work_path, ignore_errors=True)
                 os.makedirs(work_path)
                 lora_name = work_path + user_lora.lora.split("/")[-1]
                 face_name = work_path + user_lora.face.split("/")[-1]
