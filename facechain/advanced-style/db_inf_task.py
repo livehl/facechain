@@ -8,7 +8,7 @@ import os
 import oss2
 
 sys.path.append('../..')
-from dbtool import sql_to_dict, update, inserts,get
+from dbtool import sql_to_dict, update, inserts, get
 from dbtool import setting as st
 from setting import time_cache, uuid_str
 from inference import GenPortrait
@@ -60,8 +60,8 @@ def main():
                 os.makedirs(work_path)
                 lora_name = work_path + user_lora.lora.split("/")[-1]
                 face_name = work_path + user_lora.face.split("/")[-1]
-                oss.get_object_to_file(user_lora.lora, "/" + lora_name)
-                oss.get_object_to_file(user_lora.face, "/" + face_name)
+                oss.get_object_to_file(user_lora.lora, lora_name)
+                oss.get_object_to_file(user_lora.face, face_name)
                 result_data = inference_lora_fn(user_lora.metadata.split("\r\n"), lora_name, face_name, task.style_lora,
                                                 task.add_prompt,
                                                 task.multiplier_style, task.count)
