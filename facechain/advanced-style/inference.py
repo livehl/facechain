@@ -32,8 +32,6 @@ def txt2img(pipe, pos_prompt, neg_prompt, num_images=10):
     for i in range(int(num_images / 5)):
         images_style = pipe(prompt=pos_prompt, height=512, width=512, guidance_scale=7, negative_prompt=neg_prompt,
                             num_inference_steps=40, num_images_per_prompt=5, output_type="latent").images
-        with torch.no_grad():
-            images_style = pipe.decode_latents(images_style)
         images_out.extend(images_style)
     return images_out
 
