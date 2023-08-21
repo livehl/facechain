@@ -66,7 +66,7 @@ def main():
                 if not os.path.exists("system_lora/" + task.style_lora):
                     if not os.path.exists("system_lora"): os.makedirs("system_lora")
                     oss.get_object(st.face_style_lora + task.style_lora, "system_lora/" + task.style_lora)
-                result_data = inference_lora_fn(user_lora.metadata.split("\r\n"), lora_name, face_name, task.style_lora,
+                result_data = inference_lora_fn(user_lora.metadata.split("\r\n"), lora_name, face_name, "system_lora/" +task.style_lora,
                                                 task.add_prompt,
                                                 task.multiplier_style, task.count)
                 images = result_data["final_rgb"]
