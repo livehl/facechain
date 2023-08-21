@@ -106,7 +106,7 @@ def main_diffusion_inference(metadata, base_model_path, style_model_path, lora_m
         print(img.size)
         upscaled_image = \
             upscaler(prompt=all_prompt, image=img).images[0]
-        images_out.extend(upscaled_image)
+        images_out.append(upscaled_image)
 
     return {"images": images_style, "upscaled_images": images_out, "prompt": all_prompt, "neg_prompt": neg_prompt}
 
