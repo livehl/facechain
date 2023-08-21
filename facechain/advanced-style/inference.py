@@ -134,6 +134,7 @@ def main_model_inference(style_model_path, multiplier_style, add_prompt_style, u
 
 
 def select_high_quality_face(input_img_dir):
+    "选择高质量面部"
     input_img_dir = str(input_img_dir) + '_labeled'
     quality_score_list = []
     abs_img_path_list = []
@@ -141,8 +142,6 @@ def select_high_quality_face(input_img_dir):
     face_quality_func = pipeline(Tasks.face_quality_assessment, 'damo/cv_manual_face-quality-assessment_fqa')
 
     for img_name in os.listdir(input_img_dir):
-        if img_name.endswith('jsonl') or img_name.startswith('.ipynb'):
-            continue
         abs_img_name = os.path.join(input_img_dir, img_name)
         face_quality_score = face_quality_func(abs_img_name)[OutputKeys.SCORES]
         if face_quality_score is None:
@@ -227,11 +226,11 @@ class GenPortrait:
 
         # main_model_inference PIL
         result_data = main_model_inference(self.style_model_path, self.multiplier_style,
-                                                 self.add_prompt_style, self.use_main_model,
-                                                 input_img_dir=input_img_dir,
-                                                 lora_model_path=lora_model_path,
-                                                 base_model_path=base_model_path)
-        upscaled_images=result_data["upscaled_images"]
+                                           self.add_prompt_style, self.use_main_model,
+                                           input_img_dir=input_img_dir,
+                                           lora_model_path=lora_model_path,
+                                           base_model_path=base_model_path)
+        upscaled_images = result_data["upscaled_images"]
         # select_high_quality_face PIL
         selected_face = select_high_quality_face(input_img_dir)
         # face_swap cv2
@@ -241,5 +240,5 @@ class GenPortrait:
                                        num_gen_images=num_gen_images)
         # stylization
         final_gen_results = stylization_fn(self.use_stylization, rank_results)
-        result_data["final"]=final_gen_results
+        result_data["final"] = final_gen_results
         return result_data

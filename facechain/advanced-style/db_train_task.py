@@ -10,6 +10,10 @@ from dbtool import sql_to_dict, update
 from dbtool import setting as st
 from setting import time_cache, uuid_str, loads
 from facechain.train_text_to_image_lora import prepare_dataset, data_process_fn
+from modelscope.pipelines import pipeline
+from modelscope.utils.constant import Tasks
+from modelscope.outputs import OutputKeys
+import numpy as np
 
 sys.path.append('../../facechain')
 
@@ -52,6 +56,28 @@ def tranin(work_path: str, instance_images: list):
     return work_dir + "/pytorch_lora_weights.bin"
 
 
+def select_high_quality_face(input_img_dir):
+    "选择高质量面部"
+    quality_score_list = []
+    abs_img_path_list = []
+    face_quality_func = pipeline(Tasks.face_quality_assessment, 'damo/cv_manual_face-quality-assessment_fqa')
+
+    for img_name in os.listdir(input_img_dir):
+        if img_name.endswith('jsonl') or img_name.startswith('.ipynb'):
+            continue
+        abs_img_name = os.path.join(input_img_dir, img_name)
+        face_quality_score = face_quality_func(abs_img_name)[OutputKeys.SCORES]
+        if face_quality_score is None:
+            quality_score_list.append(0)
+        else:
+            quality_score_list.append(face_quality_score[0])
+        abs_img_path_list.append(abs_img_name)
+
+    sort_idx = np.argsort(quality_score_list)[::-1]
+    print('high quality face: ' + abs_img_path_list[sort_idx[0]])
+    return abs_img_path_list[sort_idx[0]]
+
+
 def main():
     while True:
         try:
@@ -72,7 +98,11 @@ def main():
                 lora_path = tranin(work_path, images)
                 update_file_name = st.face_lora_path + uuid_str() + "_weights.bin"
                 oss.put_object_from_file(update_file_name, lora_path)
-                update({"id": task.id, "lora": update_file_name, "status": 2}, "facechain_lora")
+                # 获得最好的面部图片
+                face_img=select_high_quality_face(work_path+"/training_data/personalizaition_lora_labeled")
+                update_face_name = st.face_user_face_path + uuid_str() + "_fact.png"
+                oss.put_object_from_file(update_face_name, face_img)
+                update({"id": task.id, "lora": update_file_name,"face": update_face_name, "status": 2}, "facechain_lora")
 
             time.sleep(0.5)
 
