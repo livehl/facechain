@@ -31,7 +31,7 @@ def txt2img(pipe, pos_prompt, neg_prompt, num_images=10):
     images_out = []
     for i in range(int(num_images / 5)):
         images_style = pipe(prompt=pos_prompt, height=512, width=512, guidance_scale=7, negative_prompt=neg_prompt,
-                            num_inference_steps=40, num_images_per_prompt=5, output_type="latent").images
+                            num_inference_steps=40, num_images_per_prompt=5).images
         images_out.extend(images_style)
     return images_out
 
@@ -103,6 +103,7 @@ def main_diffusion_inference(metadata, base_model_path, style_model_path, lora_m
     upscaler.to("cuda")
     images_out = []
     for img in images_style:
+        print(img.size)
         upscaled_image = \
             upscaler(prompt=all_prompt, image=img).images[0]
         images_out.extend(upscaled_image)
