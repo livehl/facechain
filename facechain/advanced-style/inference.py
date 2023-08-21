@@ -96,9 +96,10 @@ def main_diffusion_inference(input_img_dir, base_model_path, style_model_path, l
     # trigger_style = trigger_style + 'with <input_id> face, ' 
     # pos_prompt = 'Generate a standard ID photo of a chinese {}, solo, wearing high-class business/working suit, beautiful smooth face, with high-class/simple pure color background, looking straight into the camera with shoulders parallel to the frame, smile, high detail face, best quality, photorealistic'.format(gender)
     pipe = pipe.to("cuda")
-    print(trigger_style + add_prompt_style + pos_prompt)
+    all_prompt = trigger_style + add_prompt_style + pos_prompt
+    print(all_prompt)
     print(neg_prompt)
-    images_style = txt2img(pipe, trigger_style + add_prompt_style + pos_prompt, neg_prompt, num_images=10)
+    images_style = txt2img(pipe, all_prompt, neg_prompt, num_images=10)
     # 高清放大
     upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
         "data/facechain/models/stable-diffusion-x4-upscaler", torch_dtype=torch.float16)
@@ -106,10 +107,10 @@ def main_diffusion_inference(input_img_dir, base_model_path, style_model_path, l
     images_out = []
     for img in images_style:
         upscaled_image = \
-        upscaler(prompt=trigger_style + add_prompt_style + pos_prompt, image=img, noise_level=20).images[0]
+            upscaler(prompt=all_prompt, image=img, noise_level=20).images[0]
         images_out.extend(upscaled_image)
 
-    return images_style, images_out
+    return {"images": images_style, "upscaled_images": images_out, "prompt": all_prompt, "neg_prompt": neg_prompt}
 
 
 def stylization_fn(use_stylization, rank_results):
@@ -124,13 +125,12 @@ def main_model_inference(style_model_path, multiplier_style, add_prompt_style, u
                          base_model_path=None, lora_model_path=None):
     if use_main_model:
         if style_model_path is None:
-            image, upscaled_image = main_diffusion_inference(input_img_dir, base_model_path, style_model_path,
-                                                             lora_model_path)
+            return main_diffusion_inference(input_img_dir, base_model_path, style_model_path,
+                                            lora_model_path)
         else:
-            image, upscaled_image = main_diffusion_inference(input_img_dir, base_model_path, style_model_path,
-                                                             lora_model_path, multiplier_style=multiplier_style,
-                                                             add_prompt_style=add_prompt_style)
-        return image, upscaled_image
+            return main_diffusion_inference(input_img_dir, base_model_path, style_model_path,
+                                            lora_model_path, multiplier_style=multiplier_style,
+                                            add_prompt_style=add_prompt_style)
 
 
 def select_high_quality_face(input_img_dir):
@@ -226,19 +226,20 @@ class GenPortrait:
             base_model_path = os.path.join(base_model_path, sub_path)
 
         # main_model_inference PIL
-        _, upscaled_image = main_model_inference(self.style_model_path, self.multiplier_style,
+        result_data = main_model_inference(self.style_model_path, self.multiplier_style,
                                                  self.add_prompt_style, self.use_main_model,
                                                  input_img_dir=input_img_dir,
                                                  lora_model_path=lora_model_path,
                                                  base_model_path=base_model_path)
+        upscaled_images=result_data["upscaled_images"]
         # select_high_quality_face PIL
         selected_face = select_high_quality_face(input_img_dir)
         # face_swap cv2
-        swap_results = face_swap_fn(self.use_face_swap, upscaled_image, selected_face)
+        swap_results = face_swap_fn(self.use_face_swap, upscaled_images, selected_face)
         # pose_process
         rank_results = post_process_fn(self.use_post_process, swap_results, selected_face,
                                        num_gen_images=num_gen_images)
         # stylization
         final_gen_results = stylization_fn(self.use_stylization, rank_results)
-
-        return final_gen_results
+        result_data["final"]=final_gen_results
+        return result_data

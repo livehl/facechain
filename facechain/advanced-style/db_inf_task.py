@@ -4,6 +4,7 @@ import time
 import traceback
 
 import cv2
+import os
 import oss2
 
 sys.path.append('../..')
@@ -38,31 +39,12 @@ def inference_lora_fn(work_path, user_models, style_model: str, add_prompt: str,
                                use_stylization)
     num_images = min(6, num_images)
     outputs = gen_portrait(instance_data_dir, num_images, base_model, user_models, 'film/film', 'v2.0')
+    final_images = outputs["final"]
     outputs_RGB = []
-    for out_tmp in outputs:
+    for out_tmp in final_images:
         outputs_RGB.append(cv2.cvtColor(out_tmp, cv2.COLOR_BGR2RGB))
-    return outputs_RGB
-
-
-def tranin(work_path: str, instance_images: list):
-    output_model_name = 'personalizaition_lora'
-
-    # mv user upload data to target dir
-    instance_data_dir = f"{work_path}/training_data/{output_model_name}"
-    print("--------instance_data_dir: ", instance_data_dir)
-    work_dir = f"{work_path}/{output_model_name}"
-    print("----------work_dir: ", work_dir)
-    shutil.rmtree(work_dir, ignore_errors=True)
-    shutil.rmtree(instance_data_dir, ignore_errors=True)
-    prepare_dataset(instance_images, output_dataset_dir=instance_data_dir)
-    data_process_fn(instance_data_dir, True)
-    # train lora
-    inference_lora_fn(foundation_model_path='ly261666/cv_portrait_model',
-                  revision='v2.0',
-                  output_img_dir=instance_data_dir,
-                  work_dir=work_dir)
-
-    return work_dir + "/pytorch_lora_weights.bin"
+    outputs["final_rgb"] = outputs_RGB
+    return outputs
 
 
 def main():
@@ -72,10 +54,15 @@ def main():
             oss: oss2.Bucket = get_oss()
             for task in tasks:
                 print(task)
+                user_lora = sql_to_dict("select * from facechain_lora where id =", task.user_lora_id)[0]
                 update({"id": task.id, "status": 1}, "facechain_paint")
-                work_path = f"lora_inference/{task.uid}"
-                images = inference_lora_fn(work_path, task.user_lora, task.style_lora, task.add_prompt,
-                                           task.multiplier_style, task.count)
+                work_path = f"lora_inference/{user_lora.uid}"
+                # 加载文件
+                os.makedirs(work_path)
+                oss.get_object_to_file(user_lora.lora, work_path + "/" + user_lora.lora.split("/")[-1])
+                result_data = inference_lora_fn(work_path, user_lora.lora, task.style_lora, task.add_prompt,
+                                                task.multiplier_style, task.count)
+                images = result_data["final_rgb"]
                 paint_imgs = []
                 for img in images:
                     file_name = st.face_img_path + "/" + uuid_str() + ".png"
