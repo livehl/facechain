@@ -99,7 +99,7 @@ def main_diffusion_inference(metadata, base_model_path, style_model_path, lora_m
     images_style = txt2img(pipe, all_prompt, neg_prompt, num_images=10)
     # 高清放大
     upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(
-        "data/facechain/models/stable-diffusion-x4-upscaler", torch_dtype=torch.float16)
+        "system_lora/stable-diffusion-x4-upscaler", torch_dtype=torch.float16)
     upscaler.to("cuda")
     images_out = []
     for img in images_style:
