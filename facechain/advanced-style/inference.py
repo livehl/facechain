@@ -36,7 +36,7 @@ def txt2img(pipe, pos_prompt, neg_prompt, num_images=10):
     return images_out
 
 
-def main_diffusion_inference(input_img_dir, base_model_path, style_model_path, lora_model_path, multiplier_style=0.25,
+def main_diffusion_inference(metadata, base_model_path, style_model_path, lora_model_path, multiplier_style=0.25,
                              multiplier_human=1.0, add_prompt_style=''):
     pipe = StableDiffusionPipeline.from_pretrained(base_model_path, torch_dtype=torch.float32)
     neg_prompt = 'nsfw, paintings, sketches, (worst quality:2), (low quality:2) lowers, normal quality, ((monochrome)), ((grayscale)), logo, word, character'
@@ -50,13 +50,11 @@ def main_diffusion_inference(input_img_dir, base_model_path, style_model_path, l
     lora_human_path = lora_model_path
     pipe = merge_lora(pipe, lora_style_path, multiplier_style, from_safetensor=True)
     pipe = merge_lora(pipe, lora_human_path, multiplier_human, from_safetensor=False)
-    train_dir = str(input_img_dir) + '_labeled'
     add_prompt_style = []
-    f = open(os.path.join(train_dir, 'metadata.jsonl'), 'r')
     tags_all = []
     cnt = 0
     cnts_trigger = np.zeros(6)
-    for line in f:
+    for line in metadata:
         cnt += 1
         data = json.loads(line)['text'].split(', ')
         tags_all.extend(data)
@@ -74,7 +72,6 @@ def main_diffusion_inference(input_img_dir, base_model_path, style_model_path, l
             cnts_trigger[5] += 1
         else:
             print('Error.')
-    f.close()
 
     attr_idx = np.argmax(cnts_trigger)
     trigger_styles = ['a boy, children, ', 'a girl, children, ', 'a handsome man, ', 'a beautiful woman, ',
@@ -121,39 +118,16 @@ def stylization_fn(use_stylization, rank_results):
         return rank_results
 
 
-def main_model_inference(style_model_path, multiplier_style, add_prompt_style, use_main_model, input_img_dir=None,
+def main_model_inference(style_model_path, multiplier_style, add_prompt_style, use_main_model, metadata,
                          base_model_path=None, lora_model_path=None):
     if use_main_model:
         if style_model_path is None:
-            return main_diffusion_inference(input_img_dir, base_model_path, style_model_path,
+            return main_diffusion_inference(metadata, base_model_path, style_model_path,
                                             lora_model_path)
         else:
-            return main_diffusion_inference(input_img_dir, base_model_path, style_model_path,
+            return main_diffusion_inference(metadata, base_model_path, style_model_path,
                                             lora_model_path, multiplier_style=multiplier_style,
                                             add_prompt_style=add_prompt_style)
-
-
-def select_high_quality_face(input_img_dir):
-    "选择高质量面部"
-    input_img_dir = str(input_img_dir) + '_labeled'
-    quality_score_list = []
-    abs_img_path_list = []
-    ## TODO
-    face_quality_func = pipeline(Tasks.face_quality_assessment, 'damo/cv_manual_face-quality-assessment_fqa')
-
-    for img_name in os.listdir(input_img_dir):
-        abs_img_name = os.path.join(input_img_dir, img_name)
-        face_quality_score = face_quality_func(abs_img_name)[OutputKeys.SCORES]
-        if face_quality_score is None:
-            quality_score_list.append(0)
-        else:
-            quality_score_list.append(face_quality_score[0])
-        abs_img_path_list.append(abs_img_name)
-
-    sort_idx = np.argsort(quality_score_list)[::-1]
-    print('Selected face: ' + abs_img_path_list[sort_idx[0]])
-
-    return Image.open(abs_img_path_list[sort_idx[0]])
 
 
 def face_swap_fn(use_face_swap, gen_results, template_face):
@@ -218,7 +192,7 @@ class GenPortrait:
         self.multiplier_style = multiplier_style
         self.style_model_path = style_model_path
 
-    def __call__(self, input_img_dir, num_gen_images=6, base_model_path=None,
+    def __call__(self, metadata, face, num_gen_images=6, base_model_path=None,
                  lora_model_path=None, sub_path=None, revision=None):
         base_model_path = snapshot_download(base_model_path, revision=revision)
         if sub_path is not None and len(sub_path) > 0:
@@ -226,13 +200,12 @@ class GenPortrait:
 
         # main_model_inference PIL
         result_data = main_model_inference(self.style_model_path, self.multiplier_style,
-                                           self.add_prompt_style, self.use_main_model,
-                                           input_img_dir=input_img_dir,
+                                           self.add_prompt_style, self.use_main_model, metadata,
                                            lora_model_path=lora_model_path,
                                            base_model_path=base_model_path)
         upscaled_images = result_data["upscaled_images"]
         # select_high_quality_face PIL
-        selected_face = select_high_quality_face(input_img_dir)
+        selected_face = Image.open(face)
         # face_swap cv2
         swap_results = face_swap_fn(self.use_face_swap, upscaled_images, selected_face)
         # pose_process

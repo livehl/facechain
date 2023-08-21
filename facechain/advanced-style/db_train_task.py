@@ -99,10 +99,14 @@ def main():
                 update_file_name = st.face_lora_path + uuid_str() + "_weights.bin"
                 oss.put_object_from_file(update_file_name, lora_path)
                 # 获得最好的面部图片
-                face_img=select_high_quality_face(work_path+"/training_data/personalizaition_lora_labeled")
-                update_face_name = st.face_user_face_path + uuid_str() + "_fact.png"
+                face_img = select_high_quality_face(work_path + "/training_data/personalizaition_lora_labeled")
+                update_face_name = st.face_user_face_path + uuid_str() + "_face.png"
                 oss.put_object_from_file(update_face_name, face_img)
-                update({"id": task.id, "lora": update_file_name,"face": update_face_name, "status": 2}, "facechain_lora")
+                # 保存metadata信息
+                with open(work_path + "/training_data/personalizaition_lora_labeled/metadata.jsonl", "r") as f:
+                    metadata = f.read()
+                update({"id": task.id, "lora": update_file_name, "face": update_face_name, "metadata": metadata,
+                        "status": 2}, "facechain_lora")
 
             time.sleep(0.5)
 

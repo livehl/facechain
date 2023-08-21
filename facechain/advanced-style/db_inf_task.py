@@ -24,7 +24,7 @@ def get_oss() -> oss2.Bucket:
     return oss2.Bucket(auth, st.ali_oss_endpoint, st.ali_oss_bucket, proxies=None)
 
 
-def inference_lora_fn(work_path, user_models, style_model: str, add_prompt: str, multiplier_style: float,
+def inference_lora_fn(metadata, user_models, face, style_model: str, add_prompt: str, multiplier_style: float,
                       num_images: int):
     base_model = 'ly261666/cv_portrait_model'
     print("-------user_models: ", user_models)
@@ -32,13 +32,11 @@ def inference_lora_fn(work_path, user_models, style_model: str, add_prompt: str,
     use_face_swap = True
     use_post_process = True
     use_stylization = False
-    output_model_name = 'personalizaition_lora'
-    instance_data_dir = work_path + "/training_data/" + output_model_name
     gen_portrait = GenPortrait(style_model, multiplier_style, add_prompt, use_main_model, use_face_swap,
                                use_post_process,
                                use_stylization)
     num_images = min(6, num_images)
-    outputs = gen_portrait(instance_data_dir, num_images, base_model, user_models, 'film/film', 'v2.0')
+    outputs = gen_portrait(metadata, face, num_images, base_model, user_models, 'film/film', 'v2.0')
     final_images = outputs["final"]
     outputs_RGB = []
     for out_tmp in final_images:
@@ -59,8 +57,12 @@ def main():
                 work_path = f"lora_inference/{user_lora.uid}"
                 # 加载文件
                 os.makedirs(work_path)
-                oss.get_object_to_file(user_lora.lora, work_path + "/" + user_lora.lora.split("/")[-1])
-                result_data = inference_lora_fn(work_path, user_lora.lora, task.style_lora, task.add_prompt,
+                lora_name = work_path + user_lora.lora.split("/")[-1]
+                face_name = work_path + user_lora.face.split("/")[-1]
+                oss.get_object_to_file(user_lora.lora, "/" + lora_name)
+                oss.get_object_to_file(user_lora.face, "/" + face_name)
+                result_data = inference_lora_fn(user_lora.metadata.split("\r\n"), lora_name, face_name, task.style_lora,
+                                                task.add_prompt,
                                                 task.multiplier_style, task.count)
                 images = result_data["final_rgb"]
                 paint_imgs = []
