@@ -8,7 +8,7 @@ import os
 import oss2
 
 sys.path.append('../..')
-from dbtool import sql_to_dict, update, inserts
+from dbtool import sql_to_dict, update, inserts,get
 from dbtool import setting as st
 from setting import time_cache, uuid_str
 from inference import GenPortrait
@@ -52,7 +52,7 @@ def main():
             oss: oss2.Bucket = get_oss()
             for task in tasks:
                 print(task)
-                user_lora = sql_to_dict("select * from facechain_lora where id =", task.user_lora_id)[0]
+                user_lora = get("facechain_lora", task.user_lora_id)[0]
                 update({"id": task.id, "status": 1}, "facechain_paint")
                 work_path = f"lora_inference/{user_lora.uid}"
                 # 下载文件

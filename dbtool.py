@@ -247,6 +247,41 @@ def inserts(obj_list, table, replace=False):
             c.close()
 
 
+def get(table, id, idstr="id"):
+    if isinstance(id, str):
+        id = f"'{id}'"
+    db_data = sql_to_dict(f"select * from {table} where {idstr}={id}")
+    if db_data:
+        return db_data[0]
+    return None
+
+
+def get_list(table, where=None):
+    if not where: return sql_to_dict(f"select * from {table}")
+    return sql_to_dict(f"select * from {table} where {where}")
+
+
+def delete(table, where=None):
+    if not where:
+        sql = f"delete from {table}"
+    else:
+        sql = f"delete from {table} where {where}"
+    db_pool = dbp()
+    db = db_pool.acquire()
+    c = db.cursor()
+    c.execute(sql)
+    db.commit()
+    c.close()
+
+
+def get_map(table, where=None, key="id"):
+    datas = get_list(table, where)
+    dict = Map()
+    for d in datas:
+        dict[d[key]] = d
+    return dict
+
+
 def __update_setting():
     global setting
     s = sql_to_dict("select name,value from setting")
