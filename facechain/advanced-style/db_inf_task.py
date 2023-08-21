@@ -40,7 +40,7 @@ def inference_lora_fn(metadata, user_models, face, style_model: str, add_prompt:
     final_images = outputs["final"]
     outputs_RGB = []
     for out_tmp in final_images:
-        outputs_RGB.append(cv2.cvtColor(out_tmp, cv2.COLOR_BGR2RGB))
+        outputs_RGB.append(cv2.cvtColor(out_tmp, cv2.COLOR_BGR2RGB).tobytes())
     outputs["final_rgb"] = outputs_RGB
     return outputs
 
