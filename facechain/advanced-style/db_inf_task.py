@@ -52,7 +52,7 @@ def main():
             oss: oss2.Bucket = get_oss()
             for task in tasks:
                 print(task)
-                user_lora = get("facechain_lora", task.user_lora_id)[0]
+                user_lora = get("facechain_lora", task.user_lora_id)
                 update({"id": task.id, "status": 1}, "facechain_paint")
                 work_path = f"lora_inference/{user_lora.uid}"
                 # 下载文件
