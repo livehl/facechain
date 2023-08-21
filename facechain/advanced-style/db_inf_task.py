@@ -55,7 +55,7 @@ def main():
                 user_lora = sql_to_dict("select * from facechain_lora where id =", task.user_lora_id)[0]
                 update({"id": task.id, "status": 1}, "facechain_paint")
                 work_path = f"lora_inference/{user_lora.uid}"
-                # 加载文件
+                # 下载文件
                 os.makedirs(work_path)
                 lora_name = work_path + user_lora.lora.split("/")[-1]
                 face_name = work_path + user_lora.face.split("/")[-1]
