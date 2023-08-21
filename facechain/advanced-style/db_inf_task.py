@@ -63,6 +63,9 @@ def main():
                 face_name = work_path + user_lora.face.split("/")[-1]
                 oss.get_object_to_file(user_lora.lora, lora_name)
                 oss.get_object_to_file(user_lora.face, face_name)
+                if not os.path.exists("system_lora/" + task.style_lora):
+                    if not os.path.exists("system_lora"): os.makedirs("system_lora")
+                    oss.get_object(st.face_style_lora + task.style_lora, "system_lora/" + task.style_lora)
                 result_data = inference_lora_fn(user_lora.metadata.split("\r\n"), lora_name, face_name, task.style_lora,
                                                 task.add_prompt,
                                                 task.multiplier_style, task.count)
