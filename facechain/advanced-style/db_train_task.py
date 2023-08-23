@@ -89,6 +89,8 @@ def main():
                 work_path = f"lora_train/{task.uid}"
                 images = []
                 if task.images:
+                    if os.path.exists(work_path + "/raw_images/"):
+                        shutil.rmtree(work_path)
                     os.makedirs(work_path + "/raw_images/")
                 for img in loads(task.images):
                     file_name = img.split("/")[-1]
