@@ -10,7 +10,7 @@ import oss2
 sys.path.append('../..')
 from dbtool import sql_to_dict, update, inserts, get
 from dbtool import setting as st
-from setting import time_cache, uuid_str, dumps
+from setting import time_cache, uuid_str, dumps,loads
 from inference import GenPortrait
 from facechain.train_text_to_image_lora import prepare_dataset, data_process_fn
 
@@ -46,10 +46,10 @@ def inference_lora_fn(metadata, user_models, face, style_model: str, add_prompt:
 
 
 def main():
+    oss: oss2.Bucket = get_oss()
     while True:
         try:
             tasks = sql_to_dict("select * from facechain_paint where status=0 limit 1")
-            oss: oss2.Bucket = get_oss()
             for task in tasks:
                 print(task)
                 user_lora = get("facechain_lora", task.user_lora_id)
@@ -66,7 +66,7 @@ def main():
                 if task.style_lora and not os.path.exists("system_lora/" + task.style_lora):
                     if not os.path.exists("system_lora"): os.makedirs("system_lora")
                     oss.get_object_to_file(st.face_style_lora + task.style_lora, "system_lora/" + task.style_lora)
-                result_data = inference_lora_fn(user_lora.metadata.split("\r\n"), lora_name, face_name,
+                result_data = inference_lora_fn(user_lora.metadata.split("\n"), lora_name, face_name,
                                                 "system_lora/" + task.style_lora if task.style_lora else None,
                                                 task.add_prompt,
                                                 task.multiplier_style, task.count)
