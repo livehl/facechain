@@ -12,9 +12,12 @@ from json import JSONEncoder
 
 cretKey = os.getenv("SECRET_KEY", "iUe2sdaafgsdaghdsfhgsdffasfB")
 
+# dbUrl = os.getenv(
+#     "DB_URL",
+#     "mysql://tudb_ai:QP4NbGDyb6vc@bjtudb.rwlb.rds.aliyuncs.com:3306/ai_painting?charset=utf8mb4&maxsize=20")
 dbUrl = os.getenv(
     "DB_URL",
-    "mysql://tudb_ai:QP4NbGDyb6vc@bjtudb.rwlb.rds.aliyuncs.com:3306/ai_painting?charset=utf8mb4&maxsize=20")
+    "mysql://root:gyyTy5WZ6MTB5Cm@117.175.172.97:4000/wxbot?charset=utf8mb4&maxsize=20")
 
 
 class Map(dict):
