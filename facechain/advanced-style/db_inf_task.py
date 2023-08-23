@@ -75,7 +75,7 @@ def main():
                 for img in images:
                     file_name = st.face_img_path + uuid_str() + ".png"
                     info = {"prompt": result_data["prompt"], "neg_prompt": result_data["neg_prompt"]}
-                    paint_imgs.append({"uid": task.uid, "pid": task.pid, "path": file_name, "infos": dumps(info)})
+                    paint_imgs.append({"uid": task.uid, "pid": task.id, "path": file_name, "infos": dumps(info)})
                     oss.put_object(file_name, img)
                 update({"id": task.id, "status": 2}, "facechain_paint")
                 inserts(paint_imgs, "facechain_paint_files")
