@@ -66,7 +66,7 @@ def main():
                 if task.style_lora and not os.path.exists("system_lora/" + task.style_lora):
                     if not os.path.exists("system_lora"): os.makedirs("system_lora")
                     oss.get_object_to_file(st.face_style_lora + task.style_lora, "system_lora/" + task.style_lora)
-                result_data = inference_lora_fn(user_lora.metadata.strip().split("\r\n"), lora_name, face_name,
+                result_data = inference_lora_fn(user_lora.metadata.split("\r\n"), lora_name, face_name,
                                                 "system_lora/" + task.style_lora if task.style_lora else None,
                                                 task.add_prompt,
                                                 task.multiplier_style, task.count)

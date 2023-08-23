@@ -55,23 +55,24 @@ def main_diffusion_inference(metadata, base_model_path, style_model_path, lora_m
     cnt = 0
     cnts_trigger = np.zeros(6)
     for line in metadata:
-        cnt += 1
-        data = json.loads(line)['text'].split(', ')
-        tags_all.extend(data)
-        if data[1] == 'a boy':
-            cnts_trigger[0] += 1
-        elif data[1] == 'a girl':
-            cnts_trigger[1] += 1
-        elif data[1] == 'a handsome man':
-            cnts_trigger[2] += 1
-        elif data[1] == 'a beautiful woman':
-            cnts_trigger[3] += 1
-        elif data[1] == 'a mature man':
-            cnts_trigger[4] += 1
-        elif data[1] == 'a mature woman':
-            cnts_trigger[5] += 1
-        else:
-            print('Error.')
+        if line.strip():
+            cnt += 1
+            data = json.loads(line)['text'].split(', ')
+            tags_all.extend(data)
+            if data[1] == 'a boy':
+                cnts_trigger[0] += 1
+            elif data[1] == 'a girl':
+                cnts_trigger[1] += 1
+            elif data[1] == 'a handsome man':
+                cnts_trigger[2] += 1
+            elif data[1] == 'a beautiful woman':
+                cnts_trigger[3] += 1
+            elif data[1] == 'a mature man':
+                cnts_trigger[4] += 1
+            elif data[1] == 'a mature woman':
+                cnts_trigger[5] += 1
+            else:
+                print('Error.')
 
     attr_idx = np.argmax(cnts_trigger)
     trigger_styles = ['a boy, children, ', 'a girl, children, ', 'a handsome man, ', 'a beautiful woman, ',
