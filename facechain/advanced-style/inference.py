@@ -7,49 +7,101 @@ import numpy as np
 import torch
 from PIL import Image
 from diffusers import StableDiffusionPipeline
+from modelscope import snapshot_download
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope import snapshot_download
+from torch import multiprocessing
 
-from facechain.merge_lora import merge_lora
+
 from facechain.data_process.preprocessing import Blipv2
+from facechain.merge_lora import merge_lora
+
+
+def _data_process_fn_process(input_img_dir):
+    Blipv2()(input_img_dir)
 
 
 def data_process_fn(input_img_dir, use_data_process):
     ## TODO add face quality filter
     if use_data_process:
         ## TODO
-        data_process_fn = Blipv2()
-        out_json_name = data_process_fn(input_img_dir)
-        return out_json_name
-    else:
-        return os.path.join(str(input_img_dir) + '_labeled', "metadata.jsonl")
+
+        _process = multiprocessing.Process(target=_data_process_fn_process, args=(input_img_dir,))
+        _process.start()
+        _process.join()
+
+    return os.path.join(str(input_img_dir) + '_labeled', "metadata.jsonl")
 
 
 def txt2img(pipe, pos_prompt, neg_prompt, num_images=10):
+    batch_size = 5
     images_out = []
-    for i in range(int(num_images / 5)):
+    for i in range(int(num_images / batch_size)):
         images_style = pipe(prompt=pos_prompt, height=512, width=512, guidance_scale=7, negative_prompt=neg_prompt,
-                            num_inference_steps=40, num_images_per_prompt=5).images
+                            num_inference_steps=40, num_images_per_prompt=batch_size).images
         images_out.extend(images_style)
     return images_out
 
 
-def main_diffusion_inference(metadata, base_model_path, style_model_path, lora_model_path, multiplier_style=0.25,
-                             multiplier_human=1.0, add_prompt_style=''):
+def img_pad(pil_file, fixed_height=512, fixed_width=512):
+    w, h = pil_file.size
+
+    if h / float(fixed_height) >= w / float(fixed_width):
+        factor = h / float(fixed_height)
+        new_w = int(w / factor)
+        pil_file.thumbnail(size=(new_w, fixed_height))
+        pad_w = int((fixed_width - new_w) / 2)
+        pad_w1 = (fixed_width - new_w) - pad_w
+        array_file = np.array(pil_file)
+        array_file = np.pad(array_file, ((0, 0), (pad_w, pad_w1), (0, 0)), 'constant')
+    else:
+        factor = w / float(fixed_width)
+        new_h = int(h / factor)
+        pil_file.thumbnail(size=(fixed_width, new_h))
+        pad_h = fixed_height - new_h
+        pad_h1 = 0
+        array_file = np.array(pil_file)
+        array_file = np.pad(array_file, ((pad_h, pad_h1), (0, 0), (0, 0)), 'constant')
+
+    output_file = Image.fromarray(array_file)
+    return output_file
+
+
+def txt2img_pose(pipe, pose_im, pos_prompt, neg_prompt, num_images=10):
+    batch_size = 2
+    images_out = []
+    for i in range(int(num_images / batch_size)):
+        images_style = pipe(prompt=pos_prompt, image=pose_im, height=512, width=512, guidance_scale=7,
+                            negative_prompt=neg_prompt,
+                            num_inference_steps=40, num_images_per_prompt=batch_size).images
+        images_out.extend(images_style)
+    return images_out
+
+
+def txt2img_multi(pipe, images, pos_prompt, neg_prompt, num_images=10):
+    batch_size = 2
+    images_out = []
+    for i in range(int(num_images / batch_size)):
+        images_style = pipe(pos_prompt, images, height=512, width=512, guidance_scale=7, negative_prompt=neg_prompt,
+                            controlnet_conditioning_scale=[1.0, 0.5],
+                            num_inference_steps=40, num_images_per_prompt=batch_size).images
+        images_out.extend(images_style)
+    return images_out
+
+
+def main_diffusion_inference(metadata, pos_prompt, neg_prompt, base_model_path, style_model_path, lora_model_path,
+                             multiplier_style=0.25,
+                             multiplier_human=0.85):
     pipe = StableDiffusionPipeline.from_pretrained(base_model_path, torch_dtype=torch.float32)
-    neg_prompt = 'nsfw, paintings, sketches, (worst quality:2), (low quality:2) lowers, normal quality, ((monochrome)), ((grayscale)), logo, word, character'
     if style_model_path is None:
         model_dir = snapshot_download('Cherrytest/zjz_mj_jiyi_small_addtxt_fromleo', revision='v1.0.0')
         style_model_path = os.path.join(model_dir, 'zjz_mj_jiyi_small_addtxt_fromleo.safetensors')
-        pos_prompt = add_prompt_style + 'raw photo, masterpiece, chinese, simple background, wearing high-class business/working suit, high-class pure color background, solo, medium shot, high detail face, looking straight into the camera with shoulders parallel to the frame, slim body, photorealistic, best quality'
-    else:
-        pos_prompt = add_prompt_style + 'upper_body, raw photo, masterpiece, chinese, solo, medium shot, high detail face, slim body, photorealistic, best quality'
     lora_style_path = style_model_path
     lora_human_path = lora_model_path
     pipe = merge_lora(pipe, lora_style_path, multiplier_style, from_safetensor=True)
     pipe = merge_lora(pipe, lora_human_path, multiplier_human, from_safetensor=False)
+    print(f'multiplier_style:{multiplier_style}, multiplier_human:{multiplier_human}')
     add_prompt_style = []
     tags_all = []
     cnt = 0
@@ -102,32 +154,22 @@ def main_diffusion_inference(metadata, base_model_path, style_model_path, lora_m
     return {"images": images_style, "prompt": all_prompt, "neg_prompt": neg_prompt}
 
 
-def stylization_fn(use_stylization, rank_results):
-    if use_stylization:
-        ## TODO
-        pass
-    else:
-        return rank_results
 
-
-def main_model_inference(style_model_path, multiplier_style, add_prompt_style, use_main_model, metadata,
+def main_model_inference(pos_prompt, neg_prompt, style_model_path, multiplier_style, multiplier_human,
+                         use_main_model, metadata,
                          base_model_path=None, lora_model_path=None):
     if use_main_model:
-        if style_model_path is None:
-            return main_diffusion_inference(metadata, base_model_path, style_model_path,
-                                            lora_model_path, add_prompt_style=add_prompt_style)
-        else:
-            return main_diffusion_inference(metadata, base_model_path, style_model_path,
-                                            lora_model_path, multiplier_style=multiplier_style,
-                                            add_prompt_style=add_prompt_style)
+        return main_diffusion_inference(pos_prompt, neg_prompt, metadata, base_model_path, style_model_path,
+                                        lora_model_path, multiplier_style=multiplier_style,
+                                        multiplier_human=multiplier_human)
 
 
 def face_swap_fn(use_face_swap, gen_results, template_face):
     if use_face_swap:
         ## TODO
         out_img_list = []
-        image_face_fusion = pipeline(Tasks.image_face_fusion,
-                                     model='damo/cv_unet-image-face-fusion_damo')
+        image_face_fusion = pipeline('face_fusion_torch',
+                                     model='damo/cv_unet_face_fusion_torch', model_revision='v1.0.3')
         for img in gen_results:
             result = image_face_fusion(dict(template=img, user=template_face))[OutputKeys.OUTPUT_IMG]
             out_img_list.append(result)
@@ -144,9 +186,8 @@ def post_process_fn(use_post_process, swap_results_ori, selected_face, num_gen_i
     if use_post_process:
         sim_list = []
         ## TODO
-        # face_recognition_func = pipeline(Tasks.face_recognition, 'damo/cv_vit_face-recognition')
-        face_recognition_func = pipeline(Tasks.face_recognition, 'damo/cv_ir_face-recognition-ood_rts')
-        face_det_func = pipeline(task=Tasks.face_detection, model='damo/cv_ddsar_face-detection_iclr23-damofd')
+        face_recognition_func = pipeline(Tasks.face_recognition, 'damo/cv_ir_face-recognition-ood_rts', model_revision='v2.5')
+        face_det_func = pipeline(task=Tasks.face_detection, model='damo/cv_ddsar_face-detection_iclr23-damofd', model_revision='v1.1')
         swap_results = []
         for img in swap_results_ori:
             result_det = face_det_func(img)
@@ -154,7 +195,7 @@ def post_process_fn(use_post_process, swap_results_ori, selected_face, num_gen_i
             if len(bboxes) == 1:
                 bbox = bboxes[0]
                 lenface = max(bbox[2] - bbox[0], bbox[3] - bbox[1])
-                if 160 < lenface < 360:
+                if 120 < lenface < 300:
                     swap_results.append(img)
 
         select_face_emb = face_recognition_func(selected_face)[OutputKeys.IMG_EMBEDDING][0]
@@ -174,15 +215,17 @@ def post_process_fn(use_post_process, swap_results_ori, selected_face, num_gen_i
 
 
 class GenPortrait:
-    def __init__(self, style_model_path, multiplier_style, add_prompt_style, use_main_model=True, use_face_swap=True,
-                 use_post_process=True, use_stylization=True):
+    def __init__(self, pos_prompt, neg_prompt, style_model_path, multiplier_style, multiplier_human,
+                 use_main_model=True, use_face_swap=True,
+                 use_post_process=True):
         self.use_main_model = use_main_model
         self.use_face_swap = use_face_swap
         self.use_post_process = use_post_process
-        self.use_stylization = use_stylization
-        self.add_prompt_style = add_prompt_style
         self.multiplier_style = multiplier_style
+        self.multiplier_human = multiplier_human
         self.style_model_path = style_model_path
+        self.pos_prompt = pos_prompt
+        self.neg_prompt = neg_prompt
 
     def __call__(self, metadata, face, num_gen_images=6, base_model_path=None,
                  lora_model_path=None, sub_path=None, revision=None):
@@ -191,8 +234,10 @@ class GenPortrait:
             base_model_path = os.path.join(base_model_path, sub_path)
 
         # main_model_inference PIL
-        result_data = main_model_inference(self.style_model_path, self.multiplier_style,
-                                           self.add_prompt_style, self.use_main_model, metadata,
+        result_data = main_model_inference(self.pos_prompt, self.neg_prompt, self.style_model_path,
+                                           self.multiplier_style,
+                                           self.multiplier_human,
+                                           self.use_main_model, metadata,
                                            lora_model_path=lora_model_path,
                                            base_model_path=base_model_path)
         images = result_data["images"]
@@ -203,7 +248,5 @@ class GenPortrait:
         # pose_process
         rank_results = post_process_fn(self.use_post_process, swap_results, selected_face,
                                        num_gen_images=num_gen_images)
-        # stylization
-        final_gen_results = stylization_fn(self.use_stylization, rank_results)
-        result_data["final"] = final_gen_results
+        result_data["final"] = rank_results
         return result_data

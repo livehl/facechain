@@ -10,11 +10,13 @@ import oss2
 sys.path.append('../..')
 from dbtool import sql_to_dict, update, inserts, get
 from dbtool import setting as st
-from setting import time_cache, uuid_str, dumps,loads
+from setting import time_cache, uuid_str, dumps, loads
 from inference import GenPortrait
-from facechain.train_text_to_image_lora import prepare_dataset, data_process_fn
 
 sys.path.append('../../facechain')
+
+neg_prompt = 'nsfw, paintings, sketches, (worst quality:2), (low quality:2) ' \
+             'lowers, normal quality, ((monochrome)), ((grayscale)), logo, word, character'
 
 
 @time_cache(3600 * 24 * 30)
@@ -24,17 +26,16 @@ def get_oss() -> oss2.Bucket:
     return oss2.Bucket(auth, st.ali_oss_endpoint, st.ali_oss_bucket, proxies=None)
 
 
-def inference_lora_fn(metadata, user_models, face, style_model: str, add_prompt: str, multiplier_style: float,
+def inference_lora_fn(metadata, user_models, face, style_model: str, pos_prompt: str, multiplier_style: float,
                       num_images: int):
     base_model = 'ly261666/cv_portrait_model'
     print("-------user_models: ", user_models)
     use_main_model = True
     use_face_swap = True
     use_post_process = True
-    use_stylization = False
-    gen_portrait = GenPortrait(style_model, multiplier_style, add_prompt, use_main_model, use_face_swap,
-                               use_post_process,
-                               use_stylization)
+    gen_portrait = GenPortrait(pos_prompt, neg_prompt, style_model, multiplier_style, 0.95, use_main_model,
+                               use_face_swap,
+                               use_post_process)
     num_images = min(6, num_images)
     outputs = gen_portrait(metadata, face, num_images, base_model, user_models, 'film/film', 'v2.0')
     final_images = outputs["final"]
@@ -68,7 +69,7 @@ def main():
                     oss.get_object_to_file(st.face_style_lora + task.style_lora, "system_lora/" + task.style_lora)
                 result_data = inference_lora_fn(user_lora.metadata.split("\n"), lora_name, face_name,
                                                 "system_lora/" + task.style_lora if task.style_lora else None,
-                                                task.add_prompt,
+                                                st.face_default_prompt + task.add_prompt,
                                                 task.multiplier_style, task.count)
                 images = result_data["final_rgb"]
                 paint_imgs = []

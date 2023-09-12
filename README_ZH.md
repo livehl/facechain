@@ -9,57 +9,52 @@
 
 # 介绍
 
-FaceChain是一个可以用来打造个人数字形象的深度学习模型工具。用户仅需要提供最低三张照片即可获得独属于自己的个人形象数字替身。FaceChain支持在gradio的界面中使用模型训练和推理能力，也支持资深开发者使用python脚本进行训练推理。同时，FaceChain欢迎开发者对本Repo进行继续开发和贡献。
-
-您也可以在[ModelScope创空间](https://modelscope.cn/studios/CVstudio/cv_human_portrait/summary)中直接体验这项技术而无需安装任何软件。
-
+FaceChain是一个可以用来打造个人数字形象的深度学习模型工具。用户仅需要提供最低一张照片即可获得独属于自己的个人形象数字替身。FaceChain支持在gradio的界面中使用模型训练和推理能力，也支持资深开发者使用python脚本进行训练推理；同时，我们也欢迎开发者对本Repo进行继续开发和贡献。
 FaceChain的模型由[ModelScope](https://github.com/modelscope/modelscope)开源模型社区提供支持。
 
+<p align="center">
+        ModelScope Studio <a href="https://modelscope.cn/studios/CVstudio/cv_human_portrait/summary">🤖<a></a>&nbsp ｜ HuggingFace Space <a href="https://huggingface.co/spaces/modelscope/FaceChain">🤗</a>&nbsp 
+</p>
+<br>
+
 ![image](resources/git_cover_CH.jpg)
+![image](resources/git_cover_1.png)
 
 
 # News
-- 支持即插即用的风格LoRA模型！ 参考 [功能特性](#功能特性)    (2023-08-16)
-- 新增个性化prompt模块！    参考 [功能特性](#功能特性)    (2023-08-16)
-- Colab notebook安装已支持，您可以直接打开链接体验FaceChain: [Colab Notebook](https://colab.research.google.com/drive/1cUhnVXseqD2EJiotZk3k7GsfQK9_yJu_?usp=sharing)   (2023-08-15)
+- 更多技术细节可以在 [论文](https://arxiv.org/abs/2308.14256) 里查看. (2023-08-30)
+- 为Lora训练添加验证和根据face_id的融合，并添加InpaintTab（目前在Gradio界面上暂时默认隐藏）. (2023-08-28)
+- 增加姿势控制模块，可一键体验模版pose复刻. (2023-08-27)
+- 增加鲁棒性人脸lora训练，提升单图训练&风格lora融合的效果. (2023-08-27)
+- 支持在HuggingFace Space中体验FaceChain ！ <a href="https://huggingface.co/spaces/modelscope/FaceChain">🤗</a>      (2023-08-25)
+- 新增高质量提示词模板，欢迎大家一起贡献！ 参考 [awesome-prompts-facechain](resources/awesome-prompts-facechain.txt)    (2023-08-18)
+- 支持即插即用的风格LoRA模型！ (2023-08-16)
+- 新增个性化prompt模块！ (2023-08-16)
+- Colab notebook安装已支持，您可以直接打开链接体验FaceChain： [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/modelscope/facechain/blob/main/facechain_demo.ipynb)   (2023-08-15)
 
 
 # 待办事项
-- 现成风格模型即插即用（以C站风格模型为例）   --开发中
-- 增加个性化prompt模块（试穿不同的衣服等）   --开发中
-- 基于ControlNet或Composer等方式，支持指定poses
-- 增加个性化美颜特效模块
-- 基模升级，SD 1.5升级为SDXL
-- 兼容Colab使用                         --已完成
-- 兼容WebUI使用
+- 现成风格模型即插即用（以C站风格模型为例）   --迭代中
+- 增加更多美肤功能
+- 适配更多的基模，例如SDXL
+- 增加超分模块
+- 支持多人保id照片生成
+- 开发更多好玩的app
 
 
-# 功能特性
-- 现成风格模型即插即用
-  - 描述：支持用户在训练时选择不同的风格模型，以生成不同风格的个人数字形象
-  - 安装：参考 [安装指南](#安装指南)
-  - 运行：参考以下代码
-  ```shell
-    cd facechain/advanced-style
-    python3 app.py
-  ```
-  - 效果
-  ![image](resources/style_lora_xiapei.jpg)
-  - 相关资源
-    - 凤冠霞帔： [xiapei lora model](https://www.liblibai.com/modelinfo/f746450340a3a932c99be55c1a82d20c)
-    - 更多优质风格lora模型，可以参考 [Civitai](https://civitai.com/)
+# Citation
 
-- 增加个性化prompt模块
-  - 描述：支持用户增加个性化的prompt，实现变装等效果
-  - 安装：参考 [安装指南](#安装指南)
-  - 运行：参考以下代码
-  ```shell
-    cd facechain/advanced-prompt
-    python3 app.py
-  ```
-  - 效果（提示词：wearing an elegant evening gown）
-    ![image](resources/prompt_evening_gown.jpg)
-
+如果FaceChain对您的研究有所帮助，请在您的出版物中引用FaceChain
+```
+@article{liu2023facechain,
+  title={FaceChain: A Playground for Identity-Preserving Portrait Generation},
+  author={Liu, Yang and Yu, Cheng and Shang, Lei and Wu, Ziheng and 
+          Wang, Xingjun and Zhao, Yuze and Zhu, Lin and Cheng, Chen and 
+          Chen, Weitao and Xu, Chao and Xie, Haoyu and Yao, Yuan and 
+          Zhou,  Wenmeng and Chen Yingda and Xie, Xuansong and Sun, Baigui},
+  journal={arXiv preprint arXiv:2308.14256},
+  year={2023}
+```
 
 # 环境准备
 
@@ -74,7 +69,7 @@ FaceChain是一个组合模型，使用了包括PyTorch和TensorFlow在内的机
 - GPU型号: Nvidia-A10 24G
 
 
-## 资源占用
+## 资源要求
 - GPU: 显存占用约19G
 - 磁盘: 推荐预留50GB以上的存储空间
 
@@ -83,29 +78,33 @@ FaceChain是一个组合模型，使用了包括PyTorch和TensorFlow在内的机
 支持以下几种安装方式，任选其一：
 
 ### 1. 使用ModelScope提供的notebook环境【推荐】
+ModelScope(魔搭社区)提供给新用户初始的免费计算资源，参考[ModelScope Notebook](https://modelscope.cn/my/mynotebook/preset)
+    
+如果初始免费计算资源无法满足要求，您还可以从上述页面开通付费流程，以便创建一个准备就绪的ModelScope(GPU) DSW镜像实例。
+    
+Notebook环境使用简单，您只需要按以下步骤操作（注意：目前暂不提供永久存储，实例重启后数据会丢失）：
 
-    ModelScope(魔搭社区)提供给新用户初始的免费计算资源，参考[ModelScope Notebook](https://modelscope.cn/my/mynotebook/preset)
-
-    如果初始免费计算资源无法满足要求，您还可以从上述页面开通付费流程，以便创建一个准备就绪的ModelScope(GPU) DSW镜像实例。
-
-    Notebook环境使用简单，您只需要按以下步骤操作（注意：目前暂不提供永久存储，实例重启后数据会丢失）：
 
 ```shell
 # Step1: 我的notebook -> PAI-DSW -> GPU环境
 
-# Step2: 打开Terminal，将github代码clone到本地
-GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/modelscope/facechain.git --depth 1
+# Step2: 进入Notebook cell，执行下述命令从github clone代码：
+!GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/modelscope/facechain.git --depth 1
 
-# Step3: 进入Notebook cell，执行：
+# Step3: 切换当前工作路径
 import os
 os.chdir('/mnt/workspace/facechain')    # 注意替换成上述clone后的代码文件夹主路径
 print(os.getcwd())
 
 !pip3 install gradio
+!pip3 install controlnet_aux==0.0.6
 !python3 app.py
 
 # Step4: 点击生成的URL即可访问web页面，上传照片开始训练和预测
 ```
+
+除了ModelScope入口以外，您也可以前往[PAI-DSW](https://www.aliyun.com/activity/bigdata/pai/dsw) 直接购买带有ModelScope镜像的计算实例（推荐使用A10资源），这样同样可以使用如上的最简步骤运行起来。
+
 
 
 ### 2. docker镜像
@@ -121,15 +120,18 @@ docker pull registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu2
 
 # Step3: 拉起镜像运行
 docker run -it --name facechain -p 7860:7860 --gpus all registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-cuda11.7.1-py38-torch2.0.1-tf1.15.5-1.8.0 /bin/bash  # 注意 your_xxx_image_id 替换成你的镜像id
-(注意： 如果提示无法使用宿主机GPU的错误，可能需要安装nvidia-container-runtime, 参考：https://github.com/NVIDIA/nvidia-container-runtime)
+# (注意： 如果提示无法使用宿主机GPU的错误，可能需要安装nvidia-container-runtime, 参考：https://github.com/NVIDIA/nvidia-container-runtime)
 
 # Step4: 在容器中安装gradio
 pip3 install gradio
+pip3 install controlnet_aux==0.0.6
 
 # Step5: 获取facechain源代码
 GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/modelscope/facechain.git --depth 1
 cd facechain
 python3 app.py
+# Note: FaceChain目前支持单卡GPU，如果您的环境有多卡，请使用如下命令
+# CUDA_VISIBLE_DEVICES=0 python3 app.py
 
 # Step6: 点击 "public URL", 形式为 https://xxx.gradio.live
 ```
@@ -153,16 +155,27 @@ mim install mmcv-full==1.7.0
 
 # 进入facechain文件夹，执行：
 python3 app.py
+# Note: FaceChain目前支持单卡GPU，如果您的环境有多卡，请使用如下命令
+# CUDA_VISIBLE_DEVICES=0 python3 app.py
 
 # 最后点击log中生成的URL即可访问页面。
 ```
 
+备注：如果是Windows环境还需要注意以下步骤：
+```shell
+# 1. 重新安装pytorch、与tensorflow匹配的numpy
+# 2. pip方式安装mmcv-full: pip3 install mmcv-full
+```
+
 ### 4. colab运行
-支持colab notebook安装，参考： [Colab Notebook](https://colab.research.google.com/drive/1cUhnVXseqD2EJiotZk3k7GsfQK9_yJu_?usp=sharing)
+
+| Colab | Info
+| --- | --- |
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/modelscope/facechain/blob/main/facechain_demo.ipynb) | FaceChain Installation on Colab
 
 
 
-备注：app服务成功启动后，在log中访问页面URL，进入”形象定制“tab页，点击“选择图片上传”，并最少选1张包含人脸的图片；点击“开始训练”即可训练模型。训练完成后日志中会有对应展示，之后切换到“形象体验”标签页点击“开始推理”即可生成属于自己的数字形象。
+备注：app服务成功启动后，在log中访问页面URL，进入”形象定制“tab页，点击“选择图片上传”，并最少选1张包含人脸的图片；点击“开始训练”即可训练模型。训练完成后日志中会有对应展示，之后切换到“形象体验”标签页点击“开始生成”即可生成属于自己的数字形象。
 
 # 脚本运行
 
@@ -188,6 +201,12 @@ film/film: 该基模型包含了多个不同风格的子目录，其中使用了
 进行推理时，请编辑run_inference.py中的代码:
 
 ```python
+# 使用深度控制，默认False，仅在使用姿态控制时生效
+use_depth_control = False
+# 使用姿态控制，默认False
+use_pose_model = False
+# 姿态控制图片路径，仅在使用姿态控制时生效
+pose_image = 'poses/man/pose1.png'
 # 填入上述的预处理之后的图片文件夹，需要和训练时相同
 processed_dir = './processed'
 # 推理生成的图片数量
@@ -202,6 +221,8 @@ base_model_sub_dir = 'film/film'
 train_output_dir = './output'
 # 指定一个保存生成的图片的文件夹，本参数可以根据需要修改
 output_dir = './generated'
+# 使用凤冠霞帔风格模型，默认False
+use_style = False
 ```
 
 之后执行：
@@ -246,7 +267,7 @@ python run_inference.py
 
 [3]  人体解析模型M2FP：https://modelscope.cn/models/damo/cv_resnet101_image-multiple-human-parsing
 
-[4]  人像美肤模型ABPN：https://modelscope.cn/models/damo/cv_unet_skin-retouching
+[4]  人像美肤模型ABPN：https://www.modelscope.cn/models/damo/cv_unet_skin_retouching_torch
 
 [5]  人脸属性模型FairFace：https://modelscope.cn/models/damo/cv_resnet34_face-attribute-recognition_fairface
 
@@ -254,7 +275,7 @@ python run_inference.py
 
 [7]  模板脸筛选模型FQA：https://modelscope.cn/models/damo/cv_manual_face-quality-assessment_fqa
 
-[8]  人脸融合模型：https://modelscope.cn/models/damo/cv_unet-image-face-fusion_damo
+[8]  人脸融合模型：https://www.modelscope.cn/models/damo/cv_unet_face_fusion_torch
 
 [9]  人脸识别模型RTS：https://modelscope.cn/models/damo/cv_ir_face-recognition-ood_rts                                  
 
